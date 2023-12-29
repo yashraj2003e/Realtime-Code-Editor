@@ -39,7 +39,7 @@ export default function Home() {
     }
     navigate(`/editor/${id}`, {
       state: {
-        userName,
+        username: userName,
       },
     });
   }
