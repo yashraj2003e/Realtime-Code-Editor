@@ -5,12 +5,23 @@ import { xml } from "@codemirror/lang-xml";
 import { java } from "@codemirror/lang-java";
 import { okaidia } from "@uiw/codemirror-theme-okaidia";
 import toast from "react-hot-toast";
-export default function Editor() {
+import ACTIONS from "../Actions";
+export default function Editor({ socketRef, roomId }) {
   const [isLocked, setIsLocked] = useState({ lock: false, mount: 0 });
-  const [value, setValue] = useState();
-  const onChange = useCallback((val, viewUpdate) => {
-    setValue(val);
-  }, []);
+  const [value, setValue] = useState("");
+  const editorRef = useRef(null);
+
+  const onChange = useCallback(
+    (val, viewUpdate) => {
+      setValue(val);
+
+      socketRef.current.emit(ACTIONS.CODE_CHANGE, {
+        roomId,
+        code: val,
+      });
+    },
+    [socketRef, roomId]
+  );
 
   useEffect(() => {
     function check() {
@@ -30,6 +41,16 @@ export default function Editor() {
       toast.error("Editor is locked !");
     }
   }
+
+  useEffect(() => {
+    if (socketRef.current) {
+      socketRef.current.on(ACTIONS.CODE_CHANGE, ({ code }) => {
+        if (code !== null) {
+          setValue(code);
+        }
+      });
+    }
+  });
 
   useEffect(() => {
     if (!isLocked.lock && isLocked.mount > 0) {
@@ -55,7 +76,8 @@ export default function Editor() {
         style={{ fontSize: "1rem" }}
         // autoSave={true}
         autoFocus
-        value=""
+        ref={editorRef}
+        value={value}
         className="code-mirror"
         height="100vh"
         theme={okaidia}

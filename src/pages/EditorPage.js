@@ -33,24 +33,30 @@ export default function EditorPage() {
         roomId: id,
         username: location.state?.username,
       });
+
+      //Listening for joined event
+      socketRef.current.on(
+        ACTIONS.JOINED,
+        ({ clients, username, socketId }) => {
+          if (username !== location.state.username) {
+            setClients({ socketId: socketId, username: username });
+            toast.success(`${username} has joined the room !`);
+          }
+          setClients(clients);
+        }
+      );
+
+      socketRef.current.on(ACTIONS.DISCONNECTED, ({ socketId, username }) => {
+        toast.success(`${username} has left the room !`);
+        setClients((prev) => {
+          return prev.filter((client) => client.socketId !== socketId);
+        });
+      });
     };
     init();
   }, []);
 
-  const [clients, setClients] = useState([
-    {
-      sockedId: 1,
-      username: "Rakesh K",
-    },
-    {
-      sockedId: 2,
-      username: "John Doe",
-    },
-    {
-      sockedId: 3,
-      username: "John Doe",
-    },
-  ]);
+  const [clients, setClients] = useState([]);
 
   if (!location.state) {
     console.log(1);
@@ -75,7 +81,7 @@ export default function EditorPage() {
         <button className="btn leaveBtn">Leave</button>
       </div>
       <div className="editorWrap">
-        <Editor />
+        <Editor socketRef={socketRef} roomId={id} />{" "}
       </div>
     </div>
   );
