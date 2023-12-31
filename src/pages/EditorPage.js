@@ -12,7 +12,9 @@ import ACTIONS from "../Actions";
 import toast from "react-hot-toast";
 
 export default function EditorPage() {
+  const [clients, setClients] = useState([]);
   const socketRef = useRef(null);
+  const codeRef = useRef(null);
   const location = useLocation();
   const reactNavigator = useNavigate();
   const { id } = useParams();
@@ -43,6 +45,10 @@ export default function EditorPage() {
             toast.success(`${username} has joined the room !`);
           }
           setClients(clients);
+          socketRef.current.emit(ACTIONS.SYNC_CODE, {
+            code: codeRef.current,
+            socketId: socketId,
+          });
         }
       );
 
@@ -54,9 +60,26 @@ export default function EditorPage() {
       });
     };
     init();
+
+    return () => {
+      socketRef.current.disconnect();
+      socketRef.current.off(ACTIONS.JOINED);
+      socketRef.current.off(ACTIONS.DISCONNECTED);
+    };
   }, []);
 
-  const [clients, setClients] = useState([]);
+  function leaveRoom() {
+    reactNavigator("/");
+  }
+
+  async function copyRoomId() {
+    try {
+      await navigator.clipboard.writeText(id);
+      toast.success("Room Id Copied !");
+    } catch (err) {
+      toast.error("Could not copy Room Id !");
+    }
+  }
 
   if (!location.state) {
     console.log(1);
@@ -77,11 +100,21 @@ export default function EditorPage() {
             ))}
           </div>
         </div>
-        <button className="btn copyBtn">Copy ROOM ID</button>
-        <button className="btn leaveBtn">Leave</button>
+        <button className="btn copyBtn" onClick={copyRoomId}>
+          Copy ROOM ID
+        </button>
+        <button className="btn leaveBtn" onClick={leaveRoom}>
+          Leave
+        </button>
       </div>
       <div className="editorWrap">
-        <Editor socketRef={socketRef} roomId={id} />{" "}
+        <Editor
+          socketRef={socketRef}
+          roomId={id}
+          onCodeChange={(code) => {
+            codeRef.current = code;
+          }}
+        />{" "}
       </div>
     </div>
   );

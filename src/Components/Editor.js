@@ -6,7 +6,7 @@ import { java } from "@codemirror/lang-java";
 import { okaidia } from "@uiw/codemirror-theme-okaidia";
 import toast from "react-hot-toast";
 import ACTIONS from "../Actions";
-export default function Editor({ socketRef, roomId }) {
+export default function Editor({ socketRef, roomId, onCodeChange }) {
   const [isLocked, setIsLocked] = useState({ lock: false, mount: 0 });
   const [value, setValue] = useState("");
   const editorRef = useRef(null);
@@ -14,7 +14,7 @@ export default function Editor({ socketRef, roomId }) {
   const onChange = useCallback(
     (val, viewUpdate) => {
       setValue(val);
-
+      onCodeChange(val);
       socketRef.current.emit(ACTIONS.CODE_CHANGE, {
         roomId,
         code: val,
@@ -50,7 +50,11 @@ export default function Editor({ socketRef, roomId }) {
         }
       });
     }
-  });
+
+    return () => {
+      socketRef.current.off(ACTIONS.CODE_CHANGE);
+    };
+  }, [socketRef.current, socketRef]);
 
   useEffect(() => {
     if (!isLocked.lock && isLocked.mount > 0) {
