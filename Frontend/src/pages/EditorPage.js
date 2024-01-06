@@ -11,6 +11,8 @@ import { initSocket } from "../socket";
 import ACTIONS from "../Actions";
 import toast from "react-hot-toast";
 
+const ENDPOINT = "https://api-1u92.onrender.com/";
+
 export default function EditorPage() {
   const [clients, setClients] = useState([]);
   const socketRef = useRef(null);
